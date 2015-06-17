@@ -32,7 +32,7 @@ function authenticate(\Slim\Route $route) {
             // api key is not present in users table
             $response["error"] = true;
             $response["message"] = "Access Denied. Invalid Api key";
-            echoRespnse(401, $response);
+            echoResponse(401, $response);
             $app->stop();
         } else {
             global $user_id;
@@ -43,7 +43,7 @@ function authenticate(\Slim\Route $route) {
         // api key is missing in header
         $response["error"] = true;
         $response["message"] = "Api key is misssing";
-        echoRespnse(400, $response);
+        echoResponse(400, $response);
         $app->stop();
     }
 }
@@ -52,7 +52,7 @@ function authenticate(\Slim\Route $route) {
  * ----------- METHODS WITHOUT AUTHENTICATION ---------------------------------
  */
 /**
- * User Registration
+ * Doctor Registration
  * url - /register
  * method - POST
  * params - name, email, password
@@ -74,47 +74,45 @@ $app->post('/register', function() use ($app) {
             $db = new DbHandler();
             $res = $db->createUser($name, $email, $password);
 
-            if ($res == USER_CREATED_SUCCESSFULLY) {
+            if ($res == DOCTOR_CREATED_SUCCESSFULLY) {
                 $response["error"] = false;
                 $response["message"] = "You are successfully registered";
-            } else if ($res == USER_CREATE_FAILED) {
+            } else if ($res == DOCTOR_CREATE_FAILED) {
                 $response["error"] = true;
-                $response["message"] = "Oops! An error occurred while registereing";
-            } else if ($res == USER_ALREADY_EXISTED) {
+                $response["message"] = "Oops! An error occurred while registering";
+            } else if ($res == DOCTOR_ALREADY_EXISTED) {
                 $response["error"] = true;
-                $response["message"] = "Sorry, this email already existed";
+                $response["message"] = "Sorry, this email is already existed";
             }
             // echo json response
-            echoRespnse(201, $response);
+            echoResponse(201, $response);
         });
 
 /**
- * User Login
+ * Doctor Login
  * url - /login
  * method - POST
  * params - email, password
  */
 $app->post('/login', function() use ($app) {
             // check for required params
-            verifyRequiredParams(array('email', 'password'));
+            verifyRequiredParams(array('mail', 'password'));
 
             // reading post params
-            $email = $app->request()->post('email');
+            $mail = $app->request()->post('mail');
             $password = $app->request()->post('password');
             $response = array();
 
             $db = new DbHandler();
             // check for correct email and password
-            if ($db->checkLogin($email, $password)) {
-                // get the user by email
+            if ($db->checkLogin($mail, $password)) {
+                // get the doctor by mail
                 $user = $db->getUserByEmail($email);
 
                 if ($user != NULL) {
                     $response["error"] = false;
-                    $response['name'] = $user['name'];
-                    $response['email'] = $user['email'];
-                    $response['apiKey'] = $user['api_key'];
-                    $response['createdAt'] = $user['created_at'];
+                    $response['firstName'] = $user['firstName'];
+                    $response['mail'] = $user['mail'];
                 } else {
                     // unknown error occurred
                     $response['error'] = true;
@@ -126,7 +124,7 @@ $app->post('/login', function() use ($app) {
                 $response['message'] = 'Login failed. Incorrect credentials';
             }
 
-            echoRespnse(200, $response);
+            echoResponse(200, $response);
         });
 
 /*

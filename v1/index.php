@@ -49,9 +49,6 @@ function authenticate(\Slim\Route $route) {
 }
 
 /**
- * ----------- METHODS WITHOUT AUTHENTICATION ---------------------------------
- */
-/**
  * Doctor Registration
  * url - /register
  * method - POST
@@ -107,19 +104,91 @@ $app->post('/login', function() use ($app) {
             // check for correct email and password
             if ($db->checkLogin($email, $password)) {
                 // get the doctor by email
-                $user = $db->getUserByEmail($email);
+                $doctor = $db->getDoctorByEmail($email);
 
-                if ($user != NULL) {
+                if ($doctor != NULL) {
                     $response["error"] = false;
-                    $response['firstName'] = $user['firstName'];
-                    $response['email'] = $user['email'];
+                    $response['message'] = "You've been successfully identified";
+                    $response['first_name'] = $doctor['first_name'];
                 } else {
                     // unknown error occurred
                     $response['error'] = true;
                     $response['message'] = "An error occurred. Please try again";
                 }
             } else {
-                // user credentials are wrong
+                // doctor credentials are wrong
+                $response['error'] = true;
+                $response['message'] = 'Login failed. Incorrect credentials';
+            }
+
+            echoResponse(200, $response);
+        });
+
+/**
+ * Doctor Retrieve password
+ * url - /retrieve_password
+ * method - POST
+ * params - email
+ */
+$app->post('/retrieve_password', function() use ($app) {
+            // check for required params
+            verifyRequiredParams(array('email'));
+
+            // reading post params
+            $email = $app->request()->post('email');
+            $response = array();
+
+            $db = new DbHandler();
+
+                // get the doctor's password
+                $doctor = $db->getDoctorPassword($email);
+
+                if ($doctor != NULL) {
+                    $response["error"] = false;
+                    $response['message'] = "Don't forget your password next time";
+                    $response['password'] = $doctor['password'];
+                } else {
+                    // unknown error occurred
+                    $response['error'] = true;
+                    $response['message'] = "An error occurred. Please try again";
+                }
+        
+            echoResponse(200, $response);
+        });
+        
+
+/**
+ * Doctor retrieve surveys
+ * url - /retrieve_surveys
+ * method - POST
+ * params - email, password
+ */
+$app->post('/retrieve_surveys', function() use ($app) {
+            // check for required params
+            verifyRequiredParams(array('email', 'password'));
+
+            // reading post params
+            $email = $app->request()->post('email');
+            $password = $app->request()->post('password');
+            $response = array();
+
+            $db = new DbHandler();
+            // check for correct email and password
+            if ($db->checkLogin($email, $password)) {
+                // get the doctor by email
+                $doctor = $db->getDoctorByEmail($email);
+
+                if ($doctor != NULL) {
+                    $response["error"] = false;
+                    $response['message'] = "Here are your previous surveys";
+                    $response['first_name'] = $doctor['first_name'];
+                } else {
+                    // unknown error occurred
+                    $response['error'] = true;
+                    $response['message'] = "An error occurred. Please try again";
+                }
+            } else {
+                // doctor credentials are wrong
                 $response['error'] = true;
                 $response['message'] = 'Login failed. Incorrect credentials';
             }
@@ -157,7 +226,7 @@ $app->get('/tasks', 'authenticate', function() {
                 array_push($response["tasks"], $tmp);
             }
 
-            echoResponse(200, $response);
+            echoRespnse(200, $response);
         });
 
 /**

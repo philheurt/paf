@@ -26,17 +26,14 @@ class DbHandler {
      * @param String $password Doctor login password
      */
     public function createDoctor($first_name, $email, $password) {
-        require_once 'PassHash.php';
         $response = array();
 
         // First check if doctor already existed in db
         if (!$this->isDoctorExists($email)) {
-            // Generating password hash
-            $password_hash = PassHash::hash($password);
 
             // insert query
             $stmt = $this->conn->prepare("INSERT INTO doctor(email,password, first_name) values(?, ?, ?)");
-            $stmt->bind_param("sss", $email, $password_hash, $first_name);
+            $stmt->bind_param("sss", $email, $password, $first_name);
 
             $result = $stmt->execute();
 
@@ -66,13 +63,13 @@ class DbHandler {
      */
     public function checkLogin($email, $password) {
         // fetching user by email
-        $stmt = $this->conn->prepare("SELECT password FROM Doctor WHERE email = ?");
+        $stmt = $this->conn->prepare("SELECT password FROM doctor WHERE email = ?");
 
         $stmt->bind_param("s", $email);
 
         $stmt->execute();
 
-        $stmt->bind_result($password_hash);
+        $stmt->bind_result($password_bdd);
 
         $stmt->store_result();
 
@@ -84,7 +81,7 @@ class DbHandler {
 
             $stmt->close();
 
-            if (PassHash::check_password($password_hash, $password)) {
+            if ($password_bdd == $password) {
                 // Doctor password is correct
                 return TRUE;
             } else {
@@ -115,26 +112,89 @@ class DbHandler {
     }
 
     /**
-     * Fetching user by email
-     * @param String $email User email id
+     * Fetching doctor by email
+     * @param String $email Doctor email id
      */
-    public function getUserByEmail($email) {
-        $stmt = $this->conn->prepare("SELECT name, email, api_key, status, created_at FROM users WHERE email = ?");
+    public function getDoctorByEmail($email) {
+        $stmt = $this->conn->prepare("SELECT first_name, email  FROM doctor WHERE email = ?");
         $stmt->bind_param("s", $email);
         if ($stmt->execute()) {
-            // $user = $stmt->get_result()->fetch_assoc();
-            $stmt->bind_result($name, $email, $api_key, $status, $created_at);
+            // $doctor = $stmt->get_result()->fetch_assoc();
+            $stmt->bind_result($first_name, $email);
             $stmt->fetch();
-            $user = array();
-            $user["name"] = $name;
-            $user["email"] = $email;
-            $user["api_key"] = $api_key;
-            $user["status"] = $status;
-            $user["created_at"] = $created_at;
+            $doctor = array();
+            $doctor["first_name"] = $first_name;
+            $doctor["email"] = $email;
             $stmt->close();
-            return $user;
+            return $doctor;
         } else {
             return NULL;
+        }
+    }
+
+
+	/**
+     * Retrieving doctor password
+     * @param String $email 
+     * @return password
+     */
+    public function getDoctorPassword($email, $password) {
+        // fetching doctor by email
+        $stmt = $this->conn->prepare("SELECT password FROM doctor WHERE email = ?");
+
+        $stmt->bind_param("s", $email);
+
+        $stmt->execute();
+
+        $stmt->bind_result($password);
+
+        $stmt->store_result();
+  
+        $stmt->fetch();
+
+        $stmt->close();
+
+		return $password;
+            
+    }
+	
+	/**
+     * Retrieving doctor surveys token
+     * @param String $email 
+     * @return surveys
+     */
+    public function getDoctorSurveysToken($email) {
+        // fetching doctor by email
+        $stmt = $this->conn->prepare("SELECT token FROM relation_doctor_survey_parameters WHERE email = ?");
+
+        $stmt->bind_param("s", $email);
+
+        $stmt->execute();
+
+        $stmt->bind_result($surveys);
+
+        $stmt->store_result();
+
+        if ($stmt->num_rows > 0) {
+            // Found doctor with the email
+            // Now verify the password
+
+            $stmt->fetch();
+
+            $stmt->close();
+
+            if (PassHash::check_password($password_hash, $password)) {
+                // Doctor password is correct
+                return TRUE;
+            } else {
+                // Doctor password is incorrect
+                return FALSE;
+            }
+        } else {
+            $stmt->close();
+
+            //  No doctor linked with the email
+            return FALSE;
         }
     }
 
@@ -175,28 +235,6 @@ class DbHandler {
         }
     }
 
-    /**
-     * Validating user api key
-     * If the api key is there in db, it is a valid key
-     * @param String $api_key user api key
-     * @return boolean
-     */
-    public function isValidApiKey($api_key) {
-        $stmt = $this->conn->prepare("SELECT id from users WHERE api_key = ?");
-        $stmt->bind_param("s", $api_key);
-        $stmt->execute();
-        $stmt->store_result();
-        $num_rows = $stmt->num_rows;
-        $stmt->close();
-        return $num_rows > 0;
-    }
-
-    /**
-     * Generating random Unique MD5 String for user Api key
-     */
-    private function generateApiKey() {
-        return md5(uniqid(rand(), true));
-    }
 
     /* ------------- `tasks` table method ------------------ */
 

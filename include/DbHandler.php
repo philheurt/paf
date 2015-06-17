@@ -59,7 +59,7 @@ class DbHandler {
     }
 
     /**
-     * Checking user login
+     * Checking doctor login
      * @param String $email User login email id
      * @param String $password User login password
      * @return boolean User login status success/fail

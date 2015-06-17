@@ -21,22 +21,22 @@ class DbHandler {
 
     /**
      * Creating new doctor
-     * @param String $name User full name
-     * @param String $email User login email id
-     * @param String $password User login password
+     * @param String $name Doctor full name
+     * @param String $email Doctor login email id
+     * @param String $password Doctor login password
      */
-    public function createDoctor($firstName, $mail, $password) {
+    public function createDoctor($first_name, $email, $password) {
         require_once 'PassHash.php';
         $response = array();
 
         // First check if doctor already existed in db
-        if (!$this->isDoctorExists($mail)) {
+        if (!$this->isDoctorExists($email)) {
             // Generating password hash
             $password_hash = PassHash::hash($password);
 
             // insert query
-            $stmt = $this->conn->prepare("INSERT INTO Doctor(mail,password, first_name) values(?, ?, ?)");
-            $stmt->bind_param("sss", $mail, $password_hash, $firstName);
+            $stmt = $this->conn->prepare("INSERT INTO doctor(email,password, first_name) values(?, ?, ?)");
+            $stmt->bind_param("sss", $email, $password_hash, $first_name);
 
             $result = $stmt->execute();
 
@@ -64,11 +64,11 @@ class DbHandler {
      * @param String $password Doctor login password
      * @return boolean Doctor login status success/fail
      */
-    public function checkLogin($mail, $password) {
+    public function checkLogin($email, $password) {
         // fetching user by email
-        $stmt = $this->conn->prepare("SELECT password FROM Doctor WHERE mail = ?");
+        $stmt = $this->conn->prepare("SELECT password FROM Doctor WHERE email = ?");
 
-        $stmt->bind_param("s", $mail);
+        $stmt->bind_param("s", $email);
 
         $stmt->execute();
 
@@ -101,11 +101,11 @@ class DbHandler {
 
     /**
      * Checking for duplicate Doctor by email address
-     * @param String $mail mail to check in db
+     * @param String $email email to check in db
      * @return boolean
      */
-    private function isUserExists($email) {
-        $stmt = $this->conn->prepare("SELECT id from users WHERE email = ?");
+    private function isDoctorExists($email) {
+        $stmt = $this->conn->prepare("SELECT first_name from doctor WHERE email = ?");
         $stmt->bind_param("s", $email);
         $stmt->execute();
         $stmt->store_result();

@@ -59,12 +59,12 @@ function authenticate(\Slim\Route $route) {
  */
 $app->post('/register', function() use ($app) {
             // check for required params
-            verifyRequiredParams(array('name', 'email', 'password'));
+            verifyRequiredParams(array('first_name', 'email', 'password'));
 
             $response = array();
 
             // reading post params
-            $name = $app->request->post('name');
+            $first_name = $app->request->post('first_name');
             $email = $app->request->post('email');
             $password = $app->request->post('password');
 
@@ -72,7 +72,7 @@ $app->post('/register', function() use ($app) {
             validateEmail($email);
 
             $db = new DbHandler();
-            $res = $db->createUser($name, $email, $password);
+            $res = $db->createDoctor($first_name, $email, $password);
 
             if ($res == DOCTOR_CREATED_SUCCESSFULLY) {
                 $response["error"] = false;
@@ -82,7 +82,7 @@ $app->post('/register', function() use ($app) {
                 $response["message"] = "Oops! An error occurred while registering";
             } else if ($res == DOCTOR_ALREADY_EXISTED) {
                 $response["error"] = true;
-                $response["message"] = "Sorry, this email is already existed";
+                $response["message"] = "Sorry, this email is already existing";
             }
             // echo json response
             echoResponse(201, $response);
@@ -96,23 +96,23 @@ $app->post('/register', function() use ($app) {
  */
 $app->post('/login', function() use ($app) {
             // check for required params
-            verifyRequiredParams(array('mail', 'password'));
+            verifyRequiredParams(array('email', 'password'));
 
             // reading post params
-            $mail = $app->request()->post('mail');
+            $email = $app->request()->post('email');
             $password = $app->request()->post('password');
             $response = array();
 
             $db = new DbHandler();
             // check for correct email and password
-            if ($db->checkLogin($mail, $password)) {
-                // get the doctor by mail
+            if ($db->checkLogin($email, $password)) {
+                // get the doctor by email
                 $user = $db->getUserByEmail($email);
 
                 if ($user != NULL) {
                     $response["error"] = false;
                     $response['firstName'] = $user['firstName'];
-                    $response['mail'] = $user['mail'];
+                    $response['email'] = $user['email'];
                 } else {
                     // unknown error occurred
                     $response['error'] = true;
@@ -157,7 +157,7 @@ $app->get('/tasks', 'authenticate', function() {
                 array_push($response["tasks"], $tmp);
             }
 
-            echoRespnse(200, $response);
+            echoResponse(200, $response);
         });
 
 /**
@@ -180,11 +180,11 @@ $app->get('/tasks/:id', 'authenticate', function($task_id) {
                 $response["task"] = $result["task"];
                 $response["status"] = $result["status"];
                 $response["createdAt"] = $result["created_at"];
-                echoRespnse(200, $response);
+                echoResponse(200, $response);
             } else {
                 $response["error"] = true;
                 $response["message"] = "The requested resource doesn't exists";
-                echoRespnse(404, $response);
+                echoResponse(404, $response);
             }
         });
 
@@ -211,11 +211,11 @@ $app->post('/tasks', 'authenticate', function() use ($app) {
                 $response["error"] = false;
                 $response["message"] = "Task created successfully";
                 $response["task_id"] = $task_id;
-                echoRespnse(201, $response);
+                echoResponse(201, $response);
             } else {
                 $response["error"] = true;
                 $response["message"] = "Failed to create task. Please try again";
-                echoRespnse(200, $response);
+                echoResponse(200, $response);
             }            
         });
 
@@ -247,7 +247,7 @@ $app->put('/tasks/:id', 'authenticate', function($task_id) use($app) {
                 $response["error"] = true;
                 $response["message"] = "Task failed to update. Please try again!";
             }
-            echoRespnse(200, $response);
+            echoResponse(200, $response);
         });
 
 /**
@@ -270,7 +270,7 @@ $app->delete('/tasks/:id', 'authenticate', function($task_id) use($app) {
                 $response["error"] = true;
                 $response["message"] = "Task failed to delete. Please try again!";
             }
-            echoRespnse(200, $response);
+            echoResponse(200, $response);
         });
 
 /**
@@ -300,7 +300,7 @@ function verifyRequiredParams($required_fields) {
         $app = \Slim\Slim::getInstance();
         $response["error"] = true;
         $response["message"] = 'Required field(s) ' . substr($error_fields, 0, -2) . ' is missing or empty';
-        echoRespnse(400, $response);
+        echoResponse(400, $response);
         $app->stop();
     }
 }
@@ -313,7 +313,7 @@ function validateEmail($email) {
     if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
         $response["error"] = true;
         $response["message"] = 'Email address is not valid';
-        echoRespnse(400, $response);
+        echoResponse(400, $response);
         $app->stop();
     }
 }
@@ -323,7 +323,7 @@ function validateEmail($email) {
  * @param String $status_code Http response code
  * @param Int $response Json response
  */
-function echoRespnse($status_code, $response) {
+function echoResponse($status_code, $response) {
     $app = \Slim\Slim::getInstance();
     // Http response code
     $app->status($status_code);

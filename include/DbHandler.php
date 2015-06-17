@@ -35,7 +35,7 @@ class DbHandler {
             $password_hash = PassHash::hash($password);
 
             // insert query
-            $stmt = $this->conn->prepare("INSERT INTO Doctor(mail,password_hash, first_name) values(?, ?, ?)");
+            $stmt = $this->conn->prepare("INSERT INTO Doctor(mail,password, first_name) values(?, ?, ?)");
             $stmt->bind_param("sss", $mail, $password_hash, $firstName);
 
             $result = $stmt->execute();
@@ -60,15 +60,15 @@ class DbHandler {
 
     /**
      * Checking doctor login
-     * @param String $email User login email id
-     * @param String $password User login password
-     * @return boolean User login status success/fail
+     * @param String $email Doctor login email id
+     * @param String $password Doctor login password
+     * @return boolean Doctor login status success/fail
      */
-    public function checkLogin($email, $password) {
+    public function checkLogin($mail, $password) {
         // fetching user by email
-        $stmt = $this->conn->prepare("SELECT password_hash FROM users WHERE email = ?");
+        $stmt = $this->conn->prepare("SELECT password FROM Doctor WHERE mail = ?");
 
-        $stmt->bind_param("s", $email);
+        $stmt->bind_param("s", $mail);
 
         $stmt->execute();
 
@@ -77,7 +77,7 @@ class DbHandler {
         $stmt->store_result();
 
         if ($stmt->num_rows > 0) {
-            // Found user with the email
+            // Found doctor with the email
             // Now verify the password
 
             $stmt->fetch();
@@ -85,23 +85,23 @@ class DbHandler {
             $stmt->close();
 
             if (PassHash::check_password($password_hash, $password)) {
-                // User password is correct
+                // Doctor password is correct
                 return TRUE;
             } else {
-                // user password is incorrect
+                // Doctor password is incorrect
                 return FALSE;
             }
         } else {
             $stmt->close();
 
-            // user not existed with the email
+            //  No doctor linked with the email
             return FALSE;
         }
     }
 
     /**
-     * Checking for duplicate user by email address
-     * @param String $email email to check in db
+     * Checking for duplicate Doctor by email address
+     * @param String $mail mail to check in db
      * @return boolean
      */
     private function isUserExists($email) {

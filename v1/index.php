@@ -137,16 +137,16 @@ $app->post('/retrieve_password', function() use ($app) {
             // reading post params
             $email = $app->request()->post('email');
             $response = array();
-
+			$response["coucou"] = false;
             $db = new DbHandler();
 
                 // get the doctor's password
-                $doctor = $db->getDoctorPassword($email);
+                $dpassword = $db->getDoctorPassword($email);
 
                 if ($doctor != NULL) {
                     $response["error"] = false;
                     $response['message'] = "Don't forget your password next time";
-                    $response['password'] = $doctor['password'];
+                    $response['password'] = $password;
                 } else {
                     // unknown error occurred
                     $response['error'] = true;
@@ -176,17 +176,19 @@ $app->post('/retrieve_surveys', function() use ($app) {
             // check for correct email and password
             if ($db->checkLogin($email, $password)) {
                 // get the doctor by email
-                $doctor = $db->getDoctorByEmail($email);
-
-                if ($doctor != NULL) {
-                    $response["error"] = false;
-                    $response['message'] = "Here are your previous surveys";
+                //$doctor = $db->getDoctorByEmail($email);				
+				$response["error"] = false;
+                $response['message'] = "Here are your previous surveys";
+                //$surveys = $db->getDoctorSurveysToken($email);
+				$response["surveys"] = 'pouet' //$surveys;
+                /* if ($doctor != NULL) {
+                    
                     $response['first_name'] = $doctor['first_name'];
                 } else {
                     // unknown error occurred
                     $response['error'] = true;
                     $response['message'] = "An error occurred. Please try again";
-                }
+                } */
             } else {
                 // doctor credentials are wrong
                 $response['error'] = true;

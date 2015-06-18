@@ -171,31 +171,11 @@ class DbHandler {
 
         $stmt->execute();
 
-        $stmt->bind_result($surveys);
+        $surveys = $stmt->fetch_array(MYSQLI_NUM);
 
-        $stmt->store_result();
+     	$stmt->close();
 
-        if ($stmt->num_rows > 0) {
-            // Found doctor with the email
-            // Now verify the password
-
-            $stmt->fetch();
-
-            $stmt->close();
-
-            if (PassHash::check_password($password_hash, $password)) {
-                // Doctor password is correct
-                return TRUE;
-            } else {
-                // Doctor password is incorrect
-                return FALSE;
-            }
-        } else {
-            $stmt->close();
-
-            //  No doctor linked with the email
-            return FALSE;
-        }
+       return $surveys;
     }
 
     /**

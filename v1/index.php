@@ -11,42 +11,6 @@ $app = new \Slim\Slim();
 // User id from db - Global Variable
 $user_id = NULL;
 
-/**
- * Adding Middle Layer to authenticate every request
- * Checking if the request has valid api key in the 'Authorization' header
- */
-function authenticate(\Slim\Route $route) {
-    // Getting request headers
-    $headers = apache_request_headers();
-    $response = array();
-    $app = \Slim\Slim::getInstance();
-
-    // Verifying Authorization Header
-    if (isset($headers['Authorization'])) {
-        $db = new DbHandler();
-
-        // get the api key
-        $api_key = $headers['Authorization'];
-        // validating api key
-        if (!$db->isValidApiKey($api_key)) {
-            // api key is not present in users table
-            $response["error"] = true;
-            $response["message"] = "Access Denied. Invalid Api key";
-            echoResponse(401, $response);
-            $app->stop();
-        } else {
-            global $user_id;
-            // get user primary key id
-            $user_id = $db->getUserId($api_key);
-        }
-    } else {
-        // api key is missing in header
-        $response["error"] = true;
-        $response["message"] = "Api key is misssing";
-        echoResponse(400, $response);
-        $app->stop();
-    }
-}
 
 /**
  * Doctor Registration
@@ -137,16 +101,16 @@ $app->post('/retrieve_password', function() use ($app) {
             // reading post params
             $email = $app->request()->post('email');
             $response = array();
-			$response["coucou"] = false;
             $db = new DbHandler();
 
                 // get the doctor's password
-                $dpassword = $db->getDoctorPassword($email);
+                $doctor_password = $db->getDoctorPassword($email);
 
-                if ($doctor != NULL) {
+                if ($doctor_password != NULL) {
                     $response["error"] = false;
-                    $response['message'] = "Don't forget your password next time";
-                    $response['password'] = $password;
+                    $response['message'] = "Don't forget your password next time !";
+                    $response['password'] = $doctor_password;
+
                 } else {
                     // unknown error occurred
                     $response['error'] = true;

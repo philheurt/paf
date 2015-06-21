@@ -66,19 +66,13 @@ class DbHandler {
         $stmt = $this->conn->prepare("SELECT password FROM doctor WHERE email = ?");
 
         $stmt->bind_param("s", $email);
-
         $stmt->execute();
-
         $stmt->bind_result($password_bdd);
-
         $stmt->store_result();
-
         if ($stmt->num_rows > 0) {
             // Found doctor with the email
             // Now verify the password
-
             $stmt->fetch();
-
             $stmt->close();
 
             if ($password_bdd == $password) {
@@ -138,22 +132,15 @@ class DbHandler {
      * @param String $email 
      * @return password
      */
-    public function getDoctorPassword($email, $password) {
+    public function getDoctorPassword($email) {
         // fetching doctor by email
         $stmt = $this->conn->prepare("SELECT password FROM doctor WHERE email = ?");
-
         $stmt->bind_param("s", $email);
-
         $stmt->execute();
-
         $stmt->bind_result($password);
-
-        $stmt->store_result();
-  
+        $stmt->store_result();  
         $stmt->fetch();
-
         $stmt->close();
-
 		return $password;
             
     }

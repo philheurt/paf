@@ -331,7 +331,7 @@ class DbHandler {
 
         $stmt->bind_param("ss", $email, $token);
         $stmt->execute();
-        $stmt->bind_result($password_bdd);
+        $stmt->bind_result($id);
         $stmt->store_result();
         if ($stmt->num_rows > 0) {
             // Found patient with the email linked to the survey        

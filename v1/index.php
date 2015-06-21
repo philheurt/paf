@@ -256,7 +256,7 @@ $app->post('/get_survey', function() use ($app) {
 
                     $response["error"] = false;
                     $response['message'] = "Here are the survey parameters";
-                    $response['password'] = $survey;
+                    $response['survey'] = $survey;
                 } else {
                     // unknown error occurred
                     $response['error'] = true;

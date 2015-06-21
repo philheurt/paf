@@ -141,17 +141,13 @@ $app->post('/retrieve_surveys', function() use ($app) {
             // check for correct email and password
             if ($db->checkLogin($email, $password)) {
                 // get the doctor by email
-                $doctor = $db->getDoctorByEmail($email);
-
-                if ($doctor != NULL) {
+                $surveys_token = $db->getDoctorSurveysToken($email);
+				$surveys = $db->getDoctorSurveys($surveys_token);
+               
                     $response["error"] = false;
-                    $response['message'] = "Here are your previous surveys";
-                    $response['first_name'] = $doctor['first_name'];
-                } else {
-                    // unknown error occurred
-                    $response['error'] = true;
-                    $response['message'] = "An error occurred. Please try again";
-                }
+                    $response['message'] = "Here are your previous surveys";                   
+                    $response['surveys'] = $surveys;
+                
             } else {
                 // doctor credentials are wrong
                 $response['error'] = true;

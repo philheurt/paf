@@ -151,40 +151,57 @@ class DbHandler {
      * @return surveys
      */
     public function getDoctorSurveysToken($email) {
-        // fetching doctor by email
+        // 
+        $surveys = array();
         $stmt = $this->conn->prepare("SELECT token FROM relation_doctor_survey_parameters WHERE email = ?");
 
         $stmt->bind_param("s", $email);
 
         $stmt->execute();
 
-        $stmt->bind_result($surveys);
+        $stmt->bind_result($survey);
 
         $stmt->store_result();
 
-        if ($stmt->num_rows > 0) {
-            // Found doctor with the email
-            // Now verify the password
+        while($stmt->fetch())
+        {
+        	array_push($surveys,$survey);
+		}
+        $stmt->close();
 
-            $stmt->fetch();
-
-            $stmt->close();
-
-            if (PassHash::check_password($password_hash, $password)) {
-                // Doctor password is correct
-                return TRUE;
-            } else {
-                // Doctor password is incorrect
-                return FALSE;
-            }
-        } else {
-            $stmt->close();
-
-            //  No doctor linked with the email
-            return FALSE;
-        }
+    	return $surveys;        
     }
 
+/**
+     * Retrieving doctor surveys 
+     * @param  $surveys
+     * @return surveys
+     */
+    public function getDoctorSurveys($surveys_token) {
+        // 
+        $surveys = array();
+        foreach($surveys_token as $value)
+        {
+        	$stmt = $this->conn->prepare("SELECT token, title, instruction, age, sex, job, dial, circle FROM survey_parameters WHERE token = ?");
+        	$stmt->bind_param("s", $value);
+        	$stmt->execute();
+        	$stmt->bind_result($token, $title, $instruction, $age, $sex, $job, $dial, $circle);
+        	$stmt->store_result(); 
+        	$stmt->fetch(); 
+        	$survey = array();
+        	$survey["token"] = $token;
+        	$survey["title"] = $title;
+        	$survey["instruction"] = $instruction;
+        	$survey["age"] = $age;
+        	$survey["sex"] = $sex;
+        	$survey["job"] = $dial;
+        	$survey["circle"] = $circle;   	
+        	array_push($surveys,$survey);
+      	 	$stmt->close();
+		}
+		unset($value);
+    	return $surveys;        
+    }
    /**
      * Creating new survey parameters
      * @param String $name Doctor full name

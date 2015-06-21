@@ -201,6 +201,73 @@ $app->post('/add_survey', function() use ($app) {
         });
 
 /**
+ * Doctor Adding Patient
+ * url - /add_patients
+ * method - POST
+ * params - name, email, password
+ */
+$app->post('/add_patients', function() use ($app) {
+            // check for required params
+            verifyRequiredParams(array('token', 'emails'));
+
+            $response = array();
+
+            // reading post params
+            $token = $app->request->post('token');
+            $patients_json = $app->request->post('emails');
+			$patients = json_decode($patients_json);
+			$response["test"] = $patients;
+			
+            $db = new DbHandler();
+            $res = $db->addPatients($token, $patients);
+
+            if ($res == DOCTOR_CREATED_SUCCESSFULLY) {
+                $response["error"] = false;
+                $response["message"] = "Patients successfully added";
+            } else if ($res == DOCTOR_CREATE_FAILED) {
+                $response["error"] = true;
+                $response["message"] = "Oops! An error occurred while adding patient";
+            } else if ($res == DOCTOR_ALREADY_EXISTED) {
+                $response["error"] = true;
+                $response["message"] = "Sorry, but you can't add two times the same patient for one study";
+            } 
+            // echo json response 
+            echoResponse(201, $response);
+        });
+/**
+ * Patient Retrieve survey
+ * url - /get_survey
+ * method - POST
+ * params - email, token
+ */
+$app->post('/get_survey', function() use ($app) {
+            // check for required params
+            verifyRequiredParams(array('email','token'));
+
+            // reading post params
+            $email = $app->request()->post('email');
+            $token = $app->request()->post('token');
+            $response = array();
+
+            $db = new DbHandler();
+			if ($db->checkPatientSurvey($email,$token)) {
+                // get survey params
+                $survey = $db->getSurveyParameters($token);
+
+                    $response["error"] = false;
+                    $response['message'] = "Here are the survey parameters";
+                    $response['password'] = $survey;
+                } else {
+                    // unknown error occurred
+                    $response['error'] = true;
+                    $response['message'] = "An error occurred with your authentification. Please try again";
+                }
+        
+            echoResponse(200, $response);
+        });
+        
+
+/**
  * Verifying required params posted or not
  */
 function verifyRequiredParams($required_fields) {

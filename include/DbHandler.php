@@ -241,6 +241,45 @@ class DbHandler {
         return $response;
     }
     
+    /**
+     * Creating new survey parameters
+     * @param String $name Doctor full name
+     * @param String $email Doctor login email id
+     * @param String $password Doctor login password
+     */
+    public function addPatients($token, $patients) {
+        $response = array();
+
+        // First check if survey already existed in db
+       // if (!$this->isSurveyExists($email)) {
+
+            foreach( $patients as $value)
+            $stmt = $this->conn->prepare("INSERT INTO patient(email) values(?)");
+            $stmt->bind_param("s", $value);
+            $result = $stmt->execute();
+            $stmt->close();
+            
+            $stmt_2 = $this->conn->prepare("INSERT INTO survey_done(token_parameters, email_patient) values(?, ?)");
+            $stmt_2->bind_param("ss", $token, $value);
+            $result_2 = $stmt_2->execute();
+            $stmt_2->close();
+
+            // Check for successful insertion
+            if ($result && $result_2) {
+                // Doctor successfully inserted
+                return DOCTOR_CREATED_SUCCESSFULLY;
+            } else {
+                // Failed to create doctor
+                return DOCTOR_CREATE_FAILED;
+            }
+        //} else {
+            // Doctor with same email already existed in the db
+         //   return DOCTOR_ALREADY_EXISTED;
+        //}
+
+        return $response;
+    }
+    
         /**
      * Checking for duplicate survey by token
      * @param String $token token to check in db
@@ -254,6 +293,56 @@ class DbHandler {
         $num_rows = $stmt->num_rows;
         $stmt->close();
         return $num_rows > 0;
+    }
+    
+    /**
+     * Retrieving patient survey
+     * @param  $surveys
+     * @return surveys
+     */
+    public function getSurveyParameters($token) {
+        	$stmt = $this->conn->prepare("SELECT token, title, instruction, age, sex, job, dial, circle FROM survey_parameters WHERE token = ?");
+        	$stmt->bind_param("s", $token);
+        	$stmt->execute();
+        	$stmt->bind_result($token, $title, $instruction, $age, $sex, $job, $dial, $circle);
+        	$stmt->store_result(); 
+        	$stmt->fetch(); 
+        	$survey = array();
+        	$survey["token"] = $token;
+        	$survey["title"] = $title;
+        	$survey["instruction"] = $instruction;
+        	$survey["age"] = $age;
+        	$survey["sex"] = $sex;
+        	$survey["job"] = $dial;
+        	$survey["circle"] = $circle;   	
+      	 	$stmt->close();
+    	return $survey;        
+    }
+    
+    /**
+     * Checking patient login
+     * @param String $email Doctor login email id
+     * @param String $password Doctor login password
+     * @return boolean Doctor login status success/fail
+     */
+    public function checkPatientSurvey($email, $token) {
+        // fetching user by email
+        $stmt = $this->conn->prepare("SELECT id FROM survey_done WHERE email_patient = ? and token_parameters = ? ");
+
+        $stmt->bind_param("ss", $email, $token);
+        $stmt->execute();
+        $stmt->bind_result($password_bdd);
+        $stmt->store_result();
+        if ($stmt->num_rows > 0) {
+            // Found patient with the email linked to the survey        
+            $stmt->fetch();
+            $stmt->close();
+			return TRUE;    
+        } else {
+            $stmt->close();
+            //  No patient linked with the token
+            return FALSE;
+        }
     }
 }
 

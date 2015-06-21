@@ -185,7 +185,59 @@ class DbHandler {
         }
     }
 
-   
+   /**
+     * Creating new survey parameters
+     * @param String $name Doctor full name
+     * @param String $email Doctor login email id
+     * @param String $password Doctor login password
+     */
+    public function addSurveyParameters($email, $token, $title, $instruction, $age, $sex, $job, $dial, $circle) {
+        $response = array();
+
+        // First check if survey already existed in db
+        if (!$this->isSurveyExists($email)) {
+
+            // insert query
+            $stmt = $this->conn->prepare("INSERT INTO survey_parameters(token, title, instruction, age, sex, job, dial, circle) values(?, ?, ?, ?, ?, ?, ?, ?)");
+            $stmt->bind_param("ssssssss", $token, $title, $instruction, $age, $sex, $job, $dial, $circle);
+            $result = $stmt->execute();
+            $stmt->close();
+            
+            $stmt_2 = $this->conn->prepare("INSERT INTO relation_doctor_survey_parameters(token, email) values(?, ?)");
+            $stmt_2->bind_param("ss", $token, $email);
+            $result_2 = $stmt_2->execute();
+            $stmt_2->close();
+
+            // Check for successful insertion
+            if ($result && $result_2) {
+                // Doctor successfully inserted
+                return DOCTOR_CREATED_SUCCESSFULLY;
+            } else {
+                // Failed to create doctor
+                return DOCTOR_CREATE_FAILED;
+            }
+        } else {
+            // Doctor with same email already existed in the db
+            return DOCTOR_ALREADY_EXISTED;
+        }
+
+        return $response;
+    }
+    
+        /**
+     * Checking for duplicate survey by token
+     * @param String $token token to check in db
+     * @return boolean
+     */
+    private function isSurveyExists($token) {
+        $stmt = $this->conn->prepare("SELECT token from survey_parameters WHERE token = ?");
+        $stmt->bind_param("s", $token);
+        $stmt->execute();
+        $stmt->store_result();
+        $num_rows = $stmt->num_rows;
+        $stmt->close();
+        return $num_rows > 0;
+    }
 }
 
 ?>

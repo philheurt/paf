@@ -161,6 +161,48 @@ $app->post('/retrieve_surveys', function() use ($app) {
             echoResponse(200, $response);
         });
 
+/**
+ * Doctor add survey
+ * url - /register
+ * method - POST
+ * params - email, token, title, instruction, age sex, job, dial, circle
+ */
+$app->post('/add_survey', function() use ($app) {
+            // check for required params
+            verifyRequiredParams(array('email', 'token','title','instruction', 'age', 'sex', 'job', 'dial', 'circle'));
+
+            $response = array();
+
+            // reading post params
+            $email = $app->request->post('email');
+            $token = $app->request->post('token');
+            $title = $app->request->post('title');
+            $instruction = $app->request->post('instruction');
+            $age = $app->request->post('age');
+            $sex = $app->request->post('sex');
+            $job = $app->request->post('job');
+            $dial = $app->request->post('dial');
+            $circle = $app->request->post('circle');
+
+            // validating email address
+            validateEmail($email);
+
+            $db = new DbHandler();
+            $res = $db->addSurveyParameters($email, $token, $title, $instruction, $age, $sex, $job, $dial, $circle);
+			// I use here the same return codes of the registering of doctors...
+            if ($res == DOCTOR_CREATED_SUCCESSFULLY) {
+                $response["error"] = false;
+                $response["message"] = " Survey successfully saved, thank you";
+            } else if ($res == DOCTOR_CREATE_FAILED) {
+                $response["error"] = true;
+                $response["message"] = "Oops! An error occurred while saving";
+            } else if ($res == DOCTOR_ALREADY_EXISTED) {
+                $response["error"] = true;
+                $response["message"] = "Sorry, this survey already exists";
+            }
+            // echo json response
+            echoResponse(201, $response);
+        });
 
 /**
  * Verifying required params posted or not

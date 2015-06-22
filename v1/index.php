@@ -216,7 +216,6 @@ $app->post('/add_patients', function() use ($app) {
             $token = $app->request->post('token');
             $patients_json = $app->request->post('emails');
 			$patients = json_decode($patients_json);
-			$response["test"] = $patients;
 			
             $db = new DbHandler();
             $res = $db->addPatients($token, $patients);
@@ -265,7 +264,44 @@ $app->post('/get_survey', function() use ($app) {
         
             echoResponse(200, $response);
         });
-        
+/**
+ * Doctor Adding Patient
+ * url - /add_patients
+ * method - POST
+ * params - name, email, password
+ */
+$app->post('/save_survey', function() use ($app) {
+            // check for required params
+            verifyRequiredParams(array('email', 'token','group','node','link'));
+
+            $response = array();
+
+            // reading post params
+            $email = $app->request->post('email');
+            $token = $app->request->post('token');
+            $group_json = $app->request->post('group');
+            $node_json = $app->request->post('node');
+            $link_json = $app->request->post('link');
+			$group = json_decode($group_json, true);
+			$node = json_decode($node_json, true);
+			$link = json_decode($link_json, true);
+			
+            $db = new DbHandler();
+            $res = $db->saveSurvey($email, $token, $group, $node, $link);
+
+            if ($res == DOCTOR_CREATED_SUCCESSFULLY) {
+                $response["error"] = false;
+                $response["message"] = " Survey successfully saved";
+            } else if ($res == DOCTOR_CREATE_FAILED) {
+                $response["error"] = true;
+                $response["message"] = "Oops! An error occurred while saving the survey";
+            } else if ($res == DOCTOR_ALREADY_EXISTED) {
+                $response["error"] = true;
+                $response["message"] = "Sorry, but you can't add two times the same patient for one study";
+            } 
+            // echo json response 
+            echoResponse(201, $response);
+        });      
 
 /**
  * Verifying required params posted or not

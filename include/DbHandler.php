@@ -229,12 +229,12 @@ class DbHandler {
             if ($result && $result_2) {
                 // Doctor successfully inserted
                 return DOCTOR_CREATED_SUCCESSFULLY;
-            } else {
+            }else {
                 // Failed to create doctor
                 return DOCTOR_CREATE_FAILED;
             }
-        } else {
-            // Doctor with same email already existed in the db
+        }else {
+            // Survey with same token already existed in the db
             return DOCTOR_ALREADY_EXISTED;
         }
 
@@ -253,31 +253,22 @@ class DbHandler {
         // First check if survey already existed in db
        // if (!$this->isSurveyExists($email)) {
 
-            foreach( $patients as $value)
-            $stmt = $this->conn->prepare("INSERT INTO `patient`(`email`) values(?)");
-            $stmt->bind_param("s", $value);
+            foreach( $patients as $patient)
+            {
+            if($stmt = $this->conn->prepare("INSERT INTO `patient`(`email`) values(?)")){
+            $stmt->bind_param("s", $patient);
             $result = $stmt->execute();
             $stmt->close();
             
-            $stmt_2 = $this->conn->prepare("INSERT INTO `survey_done`(`token_parameters`, `email_patient`) values(?, ?)");
-            $stmt_2->bind_param("ss", $token, $value);
-            $result_2 = $stmt_2->execute();
-            $stmt_2->close();
+            	if($stmt_2 = $this->conn->prepare("INSERT INTO `survey_done`(`token_parameters`, `email_patient`) values(?, ?)")){
+            	$stmt_2->bind_param("ss", $token, $patient);
+            	$result_2 = $stmt_2->execute();
+            	$stmt_2->close();            
+				}else{  return DOCTOR_CREATE_FAILED;}
+			}else{  return DOCTOR_CREATE_FAILED; }
+			}
+        	return DOCTOR_CREATED_SUCCESSFULLY;
 
-            // Check for successful insertion
-            if ($result && $result_2) {
-                // Doctor successfully inserted
-                return DOCTOR_CREATED_SUCCESSFULLY;
-            } else {
-                // Failed to create doctor
-                return DOCTOR_CREATE_FAILED;
-            }
-        //} else {
-            // Doctor with same email already existed in the db
-         //   return DOCTOR_ALREADY_EXISTED;
-        //}
-
-        return $response;
     }
     
         /**
@@ -290,6 +281,7 @@ class DbHandler {
         $stmt->bind_param("s", $token);
         $stmt->execute();
         $stmt->store_result();
+        $stmt->fetch(); 
         $num_rows = $stmt->num_rows;
         $stmt->close();
         return $num_rows > 0;
@@ -362,7 +354,27 @@ class DbHandler {
         $stmt->close();
 		return $id;       
     }
-      
+    
+    /**
+     * Select id survey done
+     * @param String $email Doctor login email id
+     * @param String $password Doctor login password
+     * @return boolean Doctor login status success/fail
+     */
+    public function selectIdNode($email, $token, $id_app) {
+        // fetching user by email
+        if($stmt = $this->conn->prepare("SELECT `id_node` FROM `node` INNER JOIN  `relation_node_survey_done` ON `node`.`id` = `relation_node_survey_done`.`id_node` WHERE (`node`.`id_app` = ? AND `relation_node_survey_done`.`id_survey_done` = ?) ")){
+        $id_survey_done = $this->selectIdSurveyDone($email, $token);
+        $stmt->bind_param("ss", $id_app, $id_survey_done);
+        $stmt->execute();
+        $stmt->bind_result($id_node);
+        $stmt->store_result();
+        $stmt->fetch();
+        $stmt->close();
+        }else{ die("Errormessage: ". $this->conn->error);}
+		return $id_node;       
+    }  
+        
 /**
      * Save survey
      * @param String $name Doctor full name
@@ -409,23 +421,22 @@ class DbHandler {
 			
 			foreach( $links as $link)
 			{
-				if($stmt_5 = $this->conn->prepare("INSERT INTO `link`(`id`)")){
+				$stmt_5 = $this->conn->prepare("INSERT INTO `link`(`id`) values (NULL)");
             	$result_5 = $stmt_5->execute();
            		$id_link = $this->conn->insert_id;
             	$stmt_5->close();
-            	}else{ die("Errormessage: ". $this->conn->error);}
             	
-            	if($stmt_6 = $this->conn->prepare("INSERT INTO `relation_link_node`(`link_id`, `node_id`) values(?, ?)")){
-            	$stmt_6->bind_param("ss", $id_link, $link['id_1']);
+            	$id_node_1 = $this->selectIdNode($email, $token, $link['id_1']);
+            	$stmt_6 = $this->conn->prepare("INSERT INTO `relation_link_node`(`link_id`, `node_id`) values(?, ?)");
+            	$stmt_6->bind_param("ii", $id_link, $id_node_1);
             	$result_6 = $stmt_6->execute();
-            	$stmt_6->close();
-            	}else{ die("Errormessage: ". $this->conn->error);}
+            	$stmt_6->close();            	
             	
-            	if($stmt_7 = $this->conn->prepare("INSERT INTO `relation_link_node`(`link_id`, `node_id`) values(?, ?)")){
-            	$stmt_7->bind_param("ss", $id_link, $link['id_2']);
+            	$id_node_2 = $this->selectIdNode($email, $token, $link['id_2']);
+            	$stmt_7 = $this->conn->prepare("INSERT INTO `relation_link_node`(`link_id`, `node_id`) values(?, ?)");
+            	$stmt_7->bind_param("ii", $id_link, $id_node_2);
             	$result_7 = $stmt_7->execute();
-            	$stmt_7->close();
-            	}else{ die("Errormessage: ". $this->conn->error);}
+            	$stmt_7->close();           	
 			}
 
            
@@ -441,25 +452,7 @@ class DbHandler {
         return $response;
     }
         
-    /**
-     * Select id survey done
-     * @param String $email Doctor login email id
-     * @param String $password Doctor login password
-     * @return boolean Doctor login status success/fail
-     */
-    public function selectIdNode($email, $token) {
-        // fetching user by email
-        $stmt = $this->conn->prepare("SELECT `id_node` FROM `relation_node_survey_done` WHERE `id_survey_done` = ? ");
-
-        $stmt->bind_param("s", selectIdSurveyDone($email, $token));
-        $stmt->execute();
-        $stmt->bind_result($id_node);
-        $stmt->store_result();
-        $stmt->fetch();
-        $stmt->close();
-		return $id_node;       
-    }
-    
+      
     /**
      * Select id survey done
      * @param String $email Doctor login email id

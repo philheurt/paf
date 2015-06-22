@@ -215,7 +215,7 @@ $app->post('/add_patients', function() use ($app) {
             // reading post params
             $token = $app->request->post('token');
             $patients_json = $app->request->post('emails');
-			$patients = json_decode($patients_json);
+			$patients = json_decode($patients_json,true);
 			
             $db = new DbHandler();
             $res = $db->addPatients($token, $patients);

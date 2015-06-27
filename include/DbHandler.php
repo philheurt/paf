@@ -305,7 +305,8 @@ class DbHandler {
         	$survey["instruction"] = $instruction;
         	$survey["age"] = $age;
         	$survey["sex"] = $sex;
-        	$survey["job"] = $dial;
+        	$survey["job"] = $job;
+        	$survey["dial"] = $dial;
         	$survey["circle"] = $circle;   	
       	 	$stmt->close();
     	return $survey;        

@@ -213,7 +213,7 @@ class DbHandler {
         $response = array();
 
         // First check if survey already existed in db
-        if (!$this->isSurveyExists($email)) {
+        if (!$this->isSurveyExists($token)) {
 
             // insert query
             $stmt = $this->conn->prepare("INSERT INTO `survey_parameters`(`token`, `title`, `instruction`, `age`, `sex`, `job`, `dial`, `circle`) values(?, ?, ?, ?, ?, ?, ?, ?)");
